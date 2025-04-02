@@ -25,6 +25,12 @@ async function main() {
         context.configure({ device, format, alphaMode: 'opaque' });
     }
     
+    for (const canvas of canvases) {
+        const context = canvas.getContext('webgpu');
+        if (!context) throw new Error('WebGPU not supported');
+        context.configure({ device, format, alphaMode: 'opaque' });
+    }
+    
     function render() {
         const t = (performance.now() / 1000);
         const commandEncoder = device.createCommandEncoder();
@@ -33,12 +39,19 @@ async function main() {
         for (let i = 0; i < canvases.length; i++) {
             d *= 1.1;
             const canvas = canvases[i];
+            const context = canvas.getContext('webgpu');
             colorAttachments.push({
-                view: canvas.getContext('webgpu').getCurrentTexture().createView(),
-                clearValue: [Math.abs(Math.sin(t / d)), Math.abs(Math.sin(t / (d*2))), Math.abs(Math.sin(t / (d*3))), 1],
+                view: context.getCurrentTexture().createView(),
+                clearValue: [
+                    Math.abs(Math.sin(t / d)),
+                    Math.abs(Math.sin(t / (d * 2))),
+                    Math.abs(Math.sin(t / (d * 3))),
+                    1
+                ],
                 loadOp: 'clear',
                 storeOp: 'store'
             });
+            
             // For now renderPass does not accept more than 4 colorAttachments
             // in a single render pass. So we just create a new renderPass for
             // every 4 canvases.
